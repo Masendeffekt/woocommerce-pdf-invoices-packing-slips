@@ -101,9 +101,18 @@ class CreditNote extends OrderDocumentMethods {
 		do_action( 'wpo_wcpdf_init_document', $this );
 	}
 
-        public function exists() {
-                return ! empty( $this->data['number'] );
-        }
+       public function exists() {
+               return ! empty( $this->data['number'] );
+       }
+
+       /**
+        * Get the shop email address using the parent implementation.
+        *
+        * @return string
+        */
+       public function get_shop_email_address() {
+               return parent::get_shop_email_address();
+       }
 
        /**
         * Check if the credit note is allowed to be created.
