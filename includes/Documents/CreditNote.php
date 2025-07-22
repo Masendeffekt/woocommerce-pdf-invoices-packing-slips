@@ -101,35 +101,9 @@ class CreditNote extends OrderDocumentMethods {
 		do_action( 'wpo_wcpdf_init_document', $this );
 	}
 
-       public function exists() {
-               return ! empty( $this->data['number'] );
-       }
-
-       /**
-        * Get the shop email address using the parent implementation.
-        *
-        * @return string
-        */
-       public function get_shop_email_address() {
-               return parent::get_shop_email_address();
-       }
-
-       /**
-        * Check if the credit note is allowed to be created.
-        *
-        * Credit notes should only be generated when an invoice exists.
-        *
-        * @return bool
-        */
-       public function is_allowed() {
-               $invoice = wcpdf_get_document( 'invoice', $this->order );
-
-               if ( empty( $invoice ) || ! $invoice->exists() ) {
-                       return false;
-               }
-
-               return parent::is_allowed();
-       }
+	public function exists() {
+		return ! empty( $this->data['number'] );
+	}
 
 	/**
 	 * Legacy function < v3.8.0
@@ -138,38 +112,38 @@ class CreditNote extends OrderDocumentMethods {
 	 *
 	 * @return mixed
 	 */
-       public function init_number() {
-               wcpdf_deprecated_function( 'init_number', '3.8.0', 'initiate_number' );
-               return $this->initiate_number();
+        public function init_number() {
+                wcpdf_deprecated_function( 'init_number', '3.8.0', 'initiate_number' );
+                return $this->initiate_number();
+        }
+
+       /**
+        * Initiate and set document date and display date.
+        *
+        * When an invoice exists for the order, reuse its date information.
+        *
+        * @return void
+        */
+       public function initiate_date(): void {
+               if ( ! empty( $this->order ) ) {
+                       // credit notes on refunds should reference the parent order
+                       $order   = $this->is_refund( $this->order ) ? $this->get_refund_parent( $this->order ) : $this->order;
+                       $invoice = wcpdf_get_document( 'invoice', $order );
+
+                       if ( $invoice && $invoice->exists() ) {
+                               $this->set_date( $invoice->get_date() );
+                               $this->set_display_date( $invoice->get_display_date() );
+                               return;
+                       }
+               }
+
+               parent::initiate_date();
        }
-
-      /**
-       * Initiate and set document date and display date.
-       *
-       * Reuse the invoice date when it exists for the order.
-       *
-       * @return void
-       */
-      public function initiate_date(): void {
-              if ( ! empty( $this->order ) ) {
-                      // credit notes on refunds should reference the parent order
-                      $order   = $this->is_refund( $this->order ) ? $this->get_refund_parent( $this->order ) : $this->order;
-                      $invoice = wcpdf_get_document( 'invoice', $order );
-
-                      if ( $invoice && $invoice->exists() ) {
-                              $this->set_date( $invoice->get_date() );
-                              $this->set_display_date( $invoice->get_display_date() );
-                              return;
-                      }
-              }
-
-              parent::initiate_date();
-      }
 
        /**
         * Initiate and set document number.
         *
-        * Reuse the invoice number when it exists for the order.
+        * When an invoice exists for the order, reuse its number.
         *
         * @param bool $force_new_number
         *
@@ -351,7 +325,6 @@ class CreditNote extends OrderDocumentMethods {
 				'args'			=> array(
 					'option_name'		=> $option_name,
 					'id'				=> 'display_email',
-                                        'default'                       => 1,
 				)
 			),
 			array(
@@ -363,7 +336,6 @@ class CreditNote extends OrderDocumentMethods {
 				'args'			=> array(
 					'option_name'		=> $option_name,
 					'id'				=> 'display_phone',
-                                        'default'                       => 1,
 				)
 			),
 			array(
@@ -388,7 +360,6 @@ class CreditNote extends OrderDocumentMethods {
 				'args'			=> array(
 					'option_name'	=> $option_name,
 					'id'			=> 'display_date',
-                                        'default'                       => 'document_date',
 					'options' 		=> array(
 						''				=> __( 'No' , 'woocommerce-pdf-invoices-packing-slips' ),
 						'document_date'	=> __( 'Invoice Date' , 'woocommerce-pdf-invoices-packing-slips' ),
@@ -841,39 +812,11 @@ class CreditNote extends OrderDocumentMethods {
 			)
 		);
 
-               return apply_filters( 'wpo_wcpdf_document_settings_categories', $settings_categories[ $output_format ] ?? array(), $output_format, $this );
-       }
-
-       /**
-        * Retrieve order items and make credit note adjustments.
-        *
-        * @return array Modified order item list.
-        */
-       public function get_order_items(): array {
-               $items = parent::get_order_items();
-
-               foreach ( $items as &$item ) {
-                       $line_total = 0;
-
-                       // Determine the raw line total from the item object if available.
-                       if ( isset( $item['item'] ) ) {
-                               if ( is_object( $item['item'] ) && is_callable( array( $item['item'], 'get_total' ) ) ) {
-                                       $line_total = floatval( $item['item']->get_total() );
-                               } elseif ( is_array( $item['item'] ) && isset( $item['item']['line_total'] ) ) {
-                                       $line_total = floatval( $item['item']['line_total'] );
-                               }
-                       }
-
-                       if ( $line_total > 0 && isset( $item['order_price'] ) && substr( trim( $item['order_price'] ), 0, 1 ) !== '-' ) {
-                               $item['order_price'] = '-' . $item['order_price'];
-                       }
-               }
-
-               return $items;
-       }
-       public function get_woocommerce_totals() {
-               $totals = parent::get_woocommerce_totals();
-               foreach ($totals as $key => $total) {
+		return apply_filters( 'wpo_wcpdf_document_settings_categories', $settings_categories[ $output_format ] ?? array(), $output_format, $this );
+	}
+        public function get_woocommerce_totals() {
+                $totals = parent::get_woocommerce_totals();
+                foreach ($totals as $key => $total) {
                         if (isset($total["value"]) && substr(trim($total["value"]), 0, 1) !== "-") {
                                 $totals[$key]["value"] = "-" . $total["value"];
                         }
