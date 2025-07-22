@@ -328,6 +328,7 @@ class CreditNote extends OrderDocumentMethods {
 				'args'			=> array(
 					'option_name'		=> $option_name,
 					'id'				=> 'display_email',
+                                        'default'                       => 1,
 				)
 			),
 			array(
@@ -339,6 +340,7 @@ class CreditNote extends OrderDocumentMethods {
 				'args'			=> array(
 					'option_name'		=> $option_name,
 					'id'				=> 'display_phone',
+                                        'default'                       => 1,
 				)
 			),
 			array(
@@ -363,6 +365,7 @@ class CreditNote extends OrderDocumentMethods {
 				'args'			=> array(
 					'option_name'	=> $option_name,
 					'id'			=> 'display_date',
+                                        'default'                       => 'document_date',
 					'options' 		=> array(
 						''				=> __( 'No' , 'woocommerce-pdf-invoices-packing-slips' ),
 						'document_date'	=> __( 'Invoice Date' , 'woocommerce-pdf-invoices-packing-slips' ),
