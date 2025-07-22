@@ -817,15 +817,32 @@ class CreditNote extends OrderDocumentMethods {
 
 		return apply_filters( 'wpo_wcpdf_document_settings_categories', $settings_categories[ $output_format ] ?? array(), $output_format, $this );
 	}
-        public function get_woocommerce_totals() {
-                $totals = parent::get_woocommerce_totals();
-                foreach ($totals as $key => $total) {
-                        if (isset($total["value"]) && substr(trim($total["value"]), 0, 1) !== "-") {
-                                $totals[$key]["value"] = "-" . $total["value"];
-                        }
-                }
-                return $totals;
-        }
+       public function get_woocommerce_totals() {
+               $totals = parent::get_woocommerce_totals();
+
+               foreach ( $totals as $key => $total ) {
+                       if ( ! isset( $total['value'] ) ) {
+                               continue;
+                       }
+
+                       $value       = $total['value'];
+                       $clean_value = trim( wp_strip_all_tags( $value ) );
+
+                       if ( strtolower( $clean_value ) === 'free' ) {
+                               continue;
+                       }
+
+                       $numeric = str_replace( wc_get_price_thousand_separator(), '', $clean_value );
+                       $numeric = str_replace( wc_get_price_decimal_separator(), '.', $numeric );
+                       $numeric = preg_replace( '/[^0-9.\-]/', '', $numeric );
+
+                       if ( $numeric !== '' && floatval( $numeric ) > 0 && substr( $clean_value, 0, 1 ) !== '-' ) {
+                               $totals[ $key ]['value'] = '-' . $value;
+                       }
+               }
+
+               return $totals;
+       }
 
 
 }
