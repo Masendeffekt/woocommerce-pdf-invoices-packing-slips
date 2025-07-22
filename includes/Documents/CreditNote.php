@@ -101,9 +101,26 @@ class CreditNote extends OrderDocumentMethods {
 		do_action( 'wpo_wcpdf_init_document', $this );
 	}
 
-	public function exists() {
-		return ! empty( $this->data['number'] );
-	}
+        public function exists() {
+                return ! empty( $this->data['number'] );
+        }
+
+       /**
+        * Check if the credit note is allowed to be created.
+        *
+        * Credit notes should only be generated when an invoice exists.
+        *
+        * @return bool
+        */
+       public function is_allowed() {
+               $invoice = wcpdf_get_document( 'invoice', $this->order );
+
+               if ( empty( $invoice ) || ! $invoice->exists() ) {
+                       return false;
+               }
+
+               return parent::is_allowed();
+       }
 
 	/**
 	 * Legacy function < v3.8.0
