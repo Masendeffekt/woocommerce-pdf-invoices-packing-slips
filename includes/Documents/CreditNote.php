@@ -815,11 +815,39 @@ class CreditNote extends OrderDocumentMethods {
 			)
 		);
 
-		return apply_filters( 'wpo_wcpdf_document_settings_categories', $settings_categories[ $output_format ] ?? array(), $output_format, $this );
-	}
-        public function get_woocommerce_totals() {
-                $totals = parent::get_woocommerce_totals();
-                foreach ($totals as $key => $total) {
+               return apply_filters( 'wpo_wcpdf_document_settings_categories', $settings_categories[ $output_format ] ?? array(), $output_format, $this );
+       }
+
+       /**
+        * Retrieve order items and make credit note adjustments.
+        *
+        * @return array Modified order item list.
+        */
+       public function get_order_items(): array {
+               $items = parent::get_order_items();
+
+               foreach ( $items as &$item ) {
+                       $line_total = 0;
+
+                       // Determine the raw line total from the item object if available.
+                       if ( isset( $item['item'] ) ) {
+                               if ( is_object( $item['item'] ) && is_callable( array( $item['item'], 'get_total' ) ) ) {
+                                       $line_total = floatval( $item['item']->get_total() );
+                               } elseif ( is_array( $item['item'] ) && isset( $item['item']['line_total'] ) ) {
+                                       $line_total = floatval( $item['item']['line_total'] );
+                               }
+                       }
+
+                       if ( $line_total > 0 && isset( $item['order_price'] ) && substr( trim( $item['order_price'] ), 0, 1 ) !== '-' ) {
+                               $item['order_price'] = '-' . $item['order_price'];
+                       }
+               }
+
+               return $items;
+       }
+       public function get_woocommerce_totals() {
+               $totals = parent::get_woocommerce_totals();
+               foreach ($totals as $key => $total) {
                         if (isset($total["value"]) && substr(trim($total["value"]), 0, 1) !== "-") {
                                 $totals[$key]["value"] = "-" . $total["value"];
                         }
