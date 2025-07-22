@@ -1484,7 +1484,7 @@ abstract class OrderDocument {
 
 		return apply_filters(
 			'wpo_wcpdf_get_shop_address',
-			wpo_wcpdf_format_address( $address ),
+                       \wpo_wcpdf_format_address( $address ),
 			$address,
 			$this
 		);
