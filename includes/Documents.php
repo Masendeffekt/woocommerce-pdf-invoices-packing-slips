@@ -45,6 +45,7 @@ class Documents {
 	public function init() {
 		// Load Invoice & Packing Slip
 		$this->documents['\WPO\IPS\Documents\Invoice']     = new \WPO\IPS\Documents\Invoice();
+                $this->documents["\WPO\IPS\Documents\CreditNote"] = new \WPO\IPS\Documents\CreditNote();
 		$this->documents['\WPO\IPS\Documents\PackingSlip'] = new \WPO\IPS\Documents\PackingSlip();
 
 		// Allow plugins to add their own documents
