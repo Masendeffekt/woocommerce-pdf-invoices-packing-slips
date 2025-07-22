@@ -112,10 +112,38 @@ class CreditNote extends OrderDocumentMethods {
 	 *
 	 * @return mixed
 	 */
-	public function init_number() {
-		wcpdf_deprecated_function( 'init_number', '3.8.0', 'initiate_number' );
-		return $this->initiate_number();
-	}
+        public function init_number() {
+                wcpdf_deprecated_function( 'init_number', '3.8.0', 'initiate_number' );
+                return $this->initiate_number();
+        }
+
+       /**
+        * Initiate and set document number.
+        *
+        * Reuse the invoice number when it exists for the order.
+        *
+        * @param bool $force_new_number
+        *
+        * @return mixed
+        */
+       public function initiate_number( bool $force_new_number = false ) {
+               if ( ! empty( $this->order ) ) {
+                       // credit notes on refunds should reference the parent order
+                       $order   = $this->is_refund( $this->order ) ? $this->get_refund_parent( $this->order ) : $this->order;
+                       $invoice = wcpdf_get_document( 'invoice', $order );
+
+                       if ( $invoice && $invoice->exists() ) {
+                               $invoice_number = $invoice->get_number();
+
+                               if ( ! empty( $invoice_number ) ) {
+                                       $this->set_number( $invoice_number );
+                                       return $invoice_number;
+                               }
+                       }
+               }
+
+               return parent::initiate_number( $force_new_number );
+       }
 
 	public function get_filename( $context = 'download', $args = array() ) {
 		$order_count = isset($args['order_ids']) ? count($args['order_ids']) : 1;
@@ -346,6 +374,7 @@ class CreditNote extends OrderDocumentMethods {
 						'invoice_number'	=> __( 'Invoice Number' , 'woocommerce-pdf-invoices-packing-slips' ),
 						'order_number'		=> __( 'Order Number' , 'woocommerce-pdf-invoices-packing-slips' ),
 					),
+                                        'default'               => 'invoice_number',
 					'description'	=> sprintf(
 						'<strong>%s</strong> %s <a href="https://docs.wpovernight.com/woocommerce-pdf-invoices-packing-slips/invoice-numbers-explained/#why-is-the-pdf-invoice-number-different-from-the-woocommerce-order-number">%s</a>',
 						__( 'Warning!', 'woocommerce-pdf-invoices-packing-slips' ),
