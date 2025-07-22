@@ -231,7 +231,7 @@ class Admin {
 		$listing_actions = array();
 		$documents       = WPO_WCPDF()->documents->get_documents( 'enabled', 'any' );
 
-		foreach ( $documents as $document ) {
+                foreach ( $documents as $document ) {
 			$document_title = $document->get_title();
 			$document_type  = $document->get_type();
 			$icon           = ! empty( $document->icon ) ? $document->icon : WPO_WCPDF()->plugin_url() . '/assets/images/generic_document.svg';
@@ -250,7 +250,40 @@ class Admin {
 
 								if ( $document_exists ) {
 									$class[] = 'exists';
-								}
+                }
+
+                // Credit note button
+                $credit_note = wcpdf_get_document( 'credit-note', $order );
+                if ( $credit_note ) {
+                        $document_url          = WPO_WCPDF()->endpoint->get_document_link( $order, 'credit-note' );
+                        $document_title        = __( 'Credit Note', 'woocommerce-pdf-invoices-packing-slips' );
+                        $document_exists       = is_callable( array( $credit_note, 'exists' ) ) ? $credit_note->exists() : false;
+                        $document_printed      = $document_exists && is_callable( array( $credit_note, 'printed' ) ) ? $credit_note->printed() : false;
+                        $document_printed_data = $document_exists && $document_printed && is_callable( array( $credit_note, 'get_printed_data' ) ) ? $credit_note->get_printed_data() : [];
+                        $unmark_printed_url    = ! empty( $document_printed_data ) ? WPO_WCPDF()->endpoint->get_document_printed_link( 'unmark', $order, 'credit-note' ) : false;
+                        $manually_mark_printed = WPO_WCPDF()->main->document_can_be_manually_marked_printed( $credit_note );
+                        $mark_printed_url      = $manually_mark_printed ? WPO_WCPDF()->endpoint->get_document_printed_link( 'mark', $order, 'credit-note' ) : false;
+                        $class                 = array( 'credit-note' );
+                        if ( $document_exists ) {
+                                $class[] = 'exists';
+                        }
+                        if ( $document_printed ) {
+                                $class[] = 'printed';
+                        }
+
+                        $meta_box_actions['credit-note'] = array(
+                                'url'                   => esc_url( $document_url ),
+                                'alt'                   => __( 'PDF Credit Note', 'woocommerce-pdf-invoices-packing-slips' ),
+                                'title'                 => __( 'PDF Credit Note', 'woocommerce-pdf-invoices-packing-slips' ),
+                                'exists'                => $document_exists,
+                                'printed'               => $document_printed,
+                                'printed_data'          => $document_printed_data,
+                                'unmark_printed_url'    => $unmark_printed_url,
+                                'manually_mark_printed' => $manually_mark_printed,
+                                'mark_printed_url'      => $mark_printed_url,
+                                'class'                 => apply_filters( 'wpo_wcpdf_action_button_class', implode( ' ', $class ), $credit_note ),
+                        );
+                }
 								if ( $document_printed ) {
 									$class[] = 'printed';
 								}
@@ -589,8 +622,8 @@ class Admin {
 
 		$this->disable_storing_document_settings();
 
-		$meta_box_actions = array();
-		$documents        = WPO_WCPDF()->documents->get_documents();
+                $meta_box_actions = array();
+                $documents        = WPO_WCPDF()->documents->get_documents();
 
 		foreach ( $documents as $document ) {
 			$document_title = $document->get_title();
@@ -1473,12 +1506,15 @@ class Admin {
 				$document_data = $this->process_order_document_form_data( (array) $form_data, $document );
 
 				// on regenerate
-				if ( 'regenerate' === $action_type && $document->exists() ) {
-					$document->regenerate( $order, $document_data );
-					WPO_WCPDF()->main->log_document_creation_trigger_to_order_meta( $document, 'document_data', true, $request );
-					$response = array(
-						'message' => $notice_messages[$notice]['success'],
-					);
+                                if ( 'regenerate' === $action_type && $document->exists() ) {
+                                        $document->regenerate( $order, $document_data );
+                                        if ( 'credit-note' === $document_type ) {
+                                                $document->get_pdf();
+                                        }
+                                        WPO_WCPDF()->main->log_document_creation_trigger_to_order_meta( $document, 'document_data', true, $request );
+                                        $response = array(
+                                                'message' => $notice_messages[$notice]['success'],
+                                        );
 
 				// on delete
 				} elseif ( 'delete' === $action_type && $document->exists() ) {
@@ -1489,11 +1525,11 @@ class Admin {
 					);
 
 				// on save
-				} elseif ( 'save' === $action_type ) {
-					// IMPORTANT: $is_new must be set before calling initiate_number().
-					// The exists() method uses the number to determine existence, so
-					// if we call initiate_number() first, it may affect the result of exists().
-					$is_new = ( false === $document->exists() );
+                                } elseif ( 'save' === $action_type ) {
+                                        // IMPORTANT: $is_new must be set before calling initiate_number().
+                                        // The exists() method uses the number to determine existence, so
+                                        // if we call initiate_number() first, it may affect the result of exists().
+                                        $is_new = ( false === $document->exists() );
 
 					$document->set_data( $document_data, $order );
 
@@ -1504,14 +1540,17 @@ class Admin {
 
 					$document->save();
 
-					if ( $is_new ) {
-						WPO_WCPDF()->main->log_document_creation_to_order_notes( $document, 'document_data' );
-						WPO_WCPDF()->main->log_document_creation_trigger_to_order_meta( $document, 'document_data', false, $request );
-						WPO_WCPDF()->main->mark_document_printed( $document, 'document_data' );
-					}
-					$response      = array(
-						'message' => $notice_messages[$notice]['success'],
-					);
+                                        if ( $is_new ) {
+                                                WPO_WCPDF()->main->log_document_creation_to_order_notes( $document, 'document_data' );
+                                                WPO_WCPDF()->main->log_document_creation_trigger_to_order_meta( $document, 'document_data', false, $request );
+                                                WPO_WCPDF()->main->mark_document_printed( $document, 'document_data' );
+                                        }
+                                        if ( 'credit-note' === $document_type ) {
+                                                $document->get_pdf();
+                                        }
+                                        $response      = array(
+                                                'message' => $notice_messages[$notice]['success'],
+                                        );
 
 				// document not exist
 				} else {
