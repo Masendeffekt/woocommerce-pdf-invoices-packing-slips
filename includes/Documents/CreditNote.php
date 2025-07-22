@@ -138,10 +138,33 @@ class CreditNote extends OrderDocumentMethods {
 	 *
 	 * @return mixed
 	 */
-        public function init_number() {
-                wcpdf_deprecated_function( 'init_number', '3.8.0', 'initiate_number' );
-                return $this->initiate_number();
-        }
+       public function init_number() {
+               wcpdf_deprecated_function( 'init_number', '3.8.0', 'initiate_number' );
+               return $this->initiate_number();
+       }
+
+      /**
+       * Initiate and set document date and display date.
+       *
+       * Reuse the invoice date when it exists for the order.
+       *
+       * @return void
+       */
+      public function initiate_date(): void {
+              if ( ! empty( $this->order ) ) {
+                      // credit notes on refunds should reference the parent order
+                      $order   = $this->is_refund( $this->order ) ? $this->get_refund_parent( $this->order ) : $this->order;
+                      $invoice = wcpdf_get_document( 'invoice', $order );
+
+                      if ( $invoice && $invoice->exists() ) {
+                              $this->set_date( $invoice->get_date() );
+                              $this->set_display_date( $invoice->get_display_date() );
+                              return;
+                      }
+              }
+
+              parent::initiate_date();
+      }
 
        /**
         * Initiate and set document number.
