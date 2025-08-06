@@ -22,7 +22,7 @@ class CreditNote extends OrderDocumentMethods {
 		// set properties
 		$this->type  = 'credit-note';
 		$this->title = __( 'Credit Note', 'woocommerce-pdf-invoices-packing-slips' );
-		$this->icon  = WPO_WCPDF()->plugin_url() . "/assets/images/invoice.svg";
+               $this->icon  = WPO_WCPDF()->plugin_url() . "/assets/images/credit-note.svg";
 
 		// call parent constructor
 		parent::__construct( $order );
