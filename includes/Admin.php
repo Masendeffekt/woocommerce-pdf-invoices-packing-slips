@@ -248,45 +248,13 @@ class Admin {
 								$document_printed = $document_exists && is_callable( array( $document, 'printed' ) ) ? $document->printed() : false;
 								$class            = array( $document->get_type(), $output_format );
 
-								if ( $document_exists ) {
-									$class[] = 'exists';
-                }
+                                                                if ( $document_exists ) {
+                                                                        $class[] = 'exists';
+                                                                }
 
-                // Credit note button
-                $credit_note = wcpdf_get_document( 'credit-note', $order );
-                if ( $credit_note ) {
-                        $document_url          = WPO_WCPDF()->endpoint->get_document_link( $order, 'credit-note' );
-                        $document_title        = __( 'Credit Note', 'woocommerce-pdf-invoices-packing-slips' );
-                        $document_exists       = is_callable( array( $credit_note, 'exists' ) ) ? $credit_note->exists() : false;
-                        $document_printed      = $document_exists && is_callable( array( $credit_note, 'printed' ) ) ? $credit_note->printed() : false;
-                        $document_printed_data = $document_exists && $document_printed && is_callable( array( $credit_note, 'get_printed_data' ) ) ? $credit_note->get_printed_data() : [];
-                        $unmark_printed_url    = ! empty( $document_printed_data ) ? WPO_WCPDF()->endpoint->get_document_printed_link( 'unmark', $order, 'credit-note' ) : false;
-                        $manually_mark_printed = WPO_WCPDF()->main->document_can_be_manually_marked_printed( $credit_note );
-                        $mark_printed_url      = $manually_mark_printed ? WPO_WCPDF()->endpoint->get_document_printed_link( 'mark', $order, 'credit-note' ) : false;
-                        $class                 = array( 'credit-note' );
-                        if ( $document_exists ) {
-                                $class[] = 'exists';
-                        }
-                        if ( $document_printed ) {
-                                $class[] = 'printed';
-                        }
-
-                        $meta_box_actions['credit-note'] = array(
-                                'url'                   => esc_url( $document_url ),
-                                'alt'                   => __( 'PDF Credit Note', 'woocommerce-pdf-invoices-packing-slips' ),
-                                'title'                 => __( 'PDF Credit Note', 'woocommerce-pdf-invoices-packing-slips' ),
-                                'exists'                => $document_exists,
-                                'printed'               => $document_printed,
-                                'printed_data'          => $document_printed_data,
-                                'unmark_printed_url'    => $unmark_printed_url,
-                                'manually_mark_printed' => $manually_mark_printed,
-                                'mark_printed_url'      => $mark_printed_url,
-                                'class'                 => apply_filters( 'wpo_wcpdf_action_button_class', implode( ' ', $class ), $credit_note ),
-                        );
-                }
-								if ( $document_printed ) {
-									$class[] = 'printed';
-								}
+                                                                if ( $document_printed ) {
+                                                                        $class[] = 'printed';
+                                                                }
 
 								$listing_actions[$document->get_type()] = array(
 									'url'           => $document_url,
@@ -326,9 +294,37 @@ class Admin {
 				}
 
 			}
-		}
+}
 
-		$listing_actions = apply_filters( 'wpo_wcpdf_listing_actions', $listing_actions, $order );
+                // Credit note action
+                $credit_note = wcpdf_get_document( 'credit-note', $order );
+                if ( $credit_note && $credit_note->is_enabled( 'pdf' ) ) {
+                        $credit_note_url     = WPO_WCPDF()->endpoint->get_document_link( $order, 'credit-note' );
+                        $credit_note_title   = __( 'Credit Note', 'woocommerce-pdf-invoices-packing-slips' );
+                        $credit_note_icon    = ! empty( $credit_note->icon ) ? $credit_note->icon : WPO_WCPDF()->plugin_url() . '/assets/images/generic_document.svg';
+                        $credit_note_exists  = is_callable( array( $credit_note, 'exists' ) ) ? $credit_note->exists() : false;
+                        $credit_note_printed = $credit_note_exists && is_callable( array( $credit_note, 'printed' ) ) ? $credit_note->printed() : false;
+                        $credit_note_class   = array( 'credit-note' );
+
+                        if ( $credit_note_exists ) {
+                                $credit_note_class[] = 'exists';
+                        }
+                        if ( $credit_note_printed ) {
+                                $credit_note_class[] = 'printed';
+                        }
+
+                        $listing_actions['credit-note'] = array(
+                                'url'           => $credit_note_url,
+                                'img'           => $credit_note_icon,
+                                'alt'           => sprintf( __( 'PDF %s', 'woocommerce-pdf-invoices-packing-slips' ), $credit_note_title ),
+                                'exists'        => $credit_note_exists,
+                                'printed'       => $credit_note_printed,
+                                'class'         => apply_filters( 'wpo_wcpdf_action_button_class', implode( ' ', $credit_note_class ), $credit_note ),
+                                'output_format' => 'pdf',
+                        );
+                }
+
+                $listing_actions = apply_filters( 'wpo_wcpdf_listing_actions', $listing_actions, $order );
 
 		foreach ( $listing_actions as $action => $data ) {
 			if ( ! isset( $data['class'] ) ) {
