@@ -46,6 +46,7 @@ class Documents {
 		// Load Invoice & Packing Slip
 		$this->documents['\WPO\IPS\Documents\Invoice']     = new \WPO\IPS\Documents\Invoice();
 		$this->documents['\WPO\IPS\Documents\PackingSlip'] = new \WPO\IPS\Documents\PackingSlip();
+		$this->documents["\WPO\IPS\Documents\CreditNote"] = new \WPO\IPS\Documents\CreditNote();
 
 		// Allow plugins to add their own documents
 		$this->documents = apply_filters( 'wpo_wcpdf_document_classes', $this->documents );
