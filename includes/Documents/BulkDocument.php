@@ -1,6 +1,8 @@
 <?php
 namespace WPO\IPS\Documents;
 
+use WPO\IPS\CustomXmlExporter;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly
 }
@@ -166,15 +168,19 @@ class BulkDocument {
 		die();
 	}
 
-	public function output_html() {
-		echo $this->get_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		die();
-	}
+        public function output_html() {
+                echo $this->get_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                die();
+        }
 
-	public function get_filename( $context = 'download', $args = array() ) {
-		if ( empty( $this->wrapper_document ) ) {
-			$this->wrapper_document = wcpdf_get_document( $this->get_type(), null );
-		}
+        public function output_xml() {
+                CustomXmlExporter::instance()->output_bulk_document_xml( $this );
+        }
+
+        public function get_filename( $context = 'download', $args = array() ) {
+                if ( empty( $this->wrapper_document ) ) {
+                        $this->wrapper_document = wcpdf_get_document( $this->get_type(), null );
+                }
 		$default_args = array(
 			'order_ids' => $this->order_ids,
 		);

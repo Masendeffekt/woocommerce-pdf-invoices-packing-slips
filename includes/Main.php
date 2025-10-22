@@ -1,6 +1,7 @@
 <?php
 namespace WPO\IPS;
 
+use WPO\IPS\CustomXmlExporter;
 use WPO\IPS\UBL\Exceptions\FileWriteException;
 use WPO\IPS\Vendor\Dompdf\Exception as DompdfException;
 
@@ -276,9 +277,24 @@ class Main {
 		return $pdf_path;
 	}
 
-	public function get_document_ubl_attachment( $document, $tmp_path ) {
-		return wpo_ips_write_ubl_file( $document, true );
-	}
+        public function get_document_ubl_attachment( $document, $tmp_path ) {
+                return wpo_ips_write_ubl_file( $document, true );
+        }
+
+        public function get_document_xml_attachment( $document, $tmp_path ) {
+                if ( ! $document instanceof \WPO\IPS\Documents\OrderDocument ) {
+                        return false;
+                }
+
+                $filename = $document->get_filename( 'download', array( 'output' => 'xml' ) );
+                $path     = trailingslashit( $tmp_path ) . $filename;
+
+                if ( CustomXmlExporter::instance()->write_document_xml_file( $document, $path ) ) {
+                        return $path;
+                }
+
+                return false;
+        }
 
 	public function get_documents_for_email( $email_id, $order ) {
 		$documents        = WPO_WCPDF()->documents->get_documents( 'enabled', 'any' );
@@ -500,12 +516,15 @@ class Main {
 
 				$output_format = WPO_WCPDF()->settings->get_output_format( $document, $request );
 
-				switch ( $output_format ) {
-					case 'ubl':
-						$document->output_ubl();
-						break;
-					case 'html':
-						add_filter( 'wpo_wcpdf_use_path', '__return_false' );
+                                switch ( $output_format ) {
+                                        case 'xml':
+                                                $document->output_xml();
+                                                break;
+                                        case 'ubl':
+                                                $document->output_ubl();
+                                                break;
+                                        case 'html':
+                                                add_filter( 'wpo_wcpdf_use_path', '__return_false' );
 						$document->output_html();
 						break;
 					case 'pdf':

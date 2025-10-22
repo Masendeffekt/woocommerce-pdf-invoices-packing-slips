@@ -1,6 +1,7 @@
 <?php
 namespace WPO\IPS\Documents;
 
+use WPO\IPS\CustomXmlExporter;
 use WPO\IPS\Semaphore;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -1666,15 +1667,26 @@ abstract class OrderDocument {
 		exit();
 	}
 
-	public function output_html() {
-		echo $this->get_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-	}
+        public function output_html() {
+                echo $this->get_html(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+        }
 
-	public function preview_ubl() {
-		// get last settings
-		$this->settings = $this->get_settings( true, 'ubl' );
+        public function output_xml() {
+                $document = wcpdf_get_document( $this->get_type(), $this->order, true );
 
-		return $this->output_ubl( true );
+                if ( ! $document instanceof self ) {
+                        wcpdf_log_error( 'Error generating order document for XML export!', 'error' );
+                        exit();
+                }
+
+                CustomXmlExporter::instance()->output_document_xml( $document );
+        }
+
+        public function preview_ubl() {
+                // get last settings
+                $this->settings = $this->get_settings( true, 'ubl' );
+
+                return $this->output_ubl( true );
 	}
 
 	public function output_ubl( $contents_only = false ) {
