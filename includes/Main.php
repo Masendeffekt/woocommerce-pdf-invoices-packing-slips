@@ -500,19 +500,26 @@ class Main {
 
 				$output_format = WPO_WCPDF()->settings->get_output_format( $document, $request );
 
-				switch ( $output_format ) {
-					case 'ubl':
-						$document->output_ubl();
-						break;
-					case 'html':
-						add_filter( 'wpo_wcpdf_use_path', '__return_false' );
-						$document->output_html();
-						break;
-					case 'pdf':
-					default:
-						if ( has_action( 'wpo_wcpdf_created_manually' ) ) {
-							do_action( 'wpo_wcpdf_created_manually', $document->get_pdf(), $document->get_filename() );
-						}
+                                switch ( $output_format ) {
+                                        case 'ubl':
+                                                $document->output_ubl();
+                                                break;
+                                        case 'html':
+                                                add_filter( 'wpo_wcpdf_use_path', '__return_false' );
+                                                $document->output_html();
+                                                break;
+                                        case 'xml':
+                                                if ( isset( WPO_WCPDF()->xml_exporter ) && WPO_WCPDF()->xml_exporter instanceof CustomXmlExporter ) {
+                                                        WPO_WCPDF()->xml_exporter->handle_manual_invoice_xml_request( $document, $order_ids, $request );
+                                                } else {
+                                                        wcpdf_output_error( esc_html__( 'The XML exporter is unavailable.', 'woocommerce-pdf-invoices-packing-slips' ) );
+                                                }
+                                                break;
+                                        case 'pdf':
+                                        default:
+                                                if ( has_action( 'wpo_wcpdf_created_manually' ) ) {
+                                                        do_action( 'wpo_wcpdf_created_manually', $document->get_pdf(), $document->get_filename() );
+                                                }
 						$output_mode = WPO_WCPDF()->settings->get_output_mode( $document_type );
 						$document->output_pdf( $output_mode );
 						break;

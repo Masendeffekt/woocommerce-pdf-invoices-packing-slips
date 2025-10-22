@@ -6,15 +6,19 @@ jQuery( function( $ ) {
 
 		if ( $.inArray( action, wpo_wcpdf_ajax.bulk_actions ) !== -1 ) {
 			e.preventDefault();
-			let template   = action;
-			let checked    = [];
-			let ubl_output = false;
+                let template   = action;
+                let checked    = [];
+                let ubl_output = false;
+                let xml_output = false;
 
 			// is UBL action
-			if ( action.indexOf( 'ubl' ) != -1 ) {
-				template   = template.replace( '_ubl', '' );
-				ubl_output = true;
-			}
+                        if ( action.indexOf( 'ubl' ) != -1 ) {
+                                template   = template.replace( '_ubl', '' );
+                                ubl_output = true;
+                        } else if ( action.indexOf( 'xml' ) != -1 ) {
+                                template   = template.replace( '_xml', '' );
+                                xml_output = true;
+                        }
 
 			$( 'tbody th.check-column input[type="checkbox"]:checked' ).each(
 				function() {
@@ -37,18 +41,24 @@ jQuery( function( $ ) {
 			}
 
 			// ubl
-			if ( ubl_output ) {
-				$.each( checked, function( i, order_id ) {
-					full_url = partial_url + '&order_ids='+order_id+'&output=ubl';
-					window.open( full_url, '_blank' );
-				} );
+                        if ( ubl_output ) {
+                                $.each( checked, function( i, order_id ) {
+                                        full_url = partial_url + '&order_ids='+order_id+'&output=ubl';
+                                        window.open( full_url, '_blank' );
+                                } );
 
-			// pdf
-			} else {
-				let order_ids = checked.join( 'x' );
-				full_url      = partial_url + '&order_ids='+order_ids;
-				window.open( full_url, '_blank' );
-			}
+                        // xml
+                        } else if ( xml_output ) {
+                                let order_ids = checked.join( 'x' );
+                                full_url      = partial_url + '&order_ids='+order_ids+'&output=xml';
+                                window.open( full_url, '_blank' );
+
+                        // pdf
+                        } else {
+                                let order_ids = checked.join( 'x' );
+                                full_url      = partial_url + '&order_ids='+order_ids;
+                                window.open( full_url, '_blank' );
+                        }
 
 		}
 	} );
