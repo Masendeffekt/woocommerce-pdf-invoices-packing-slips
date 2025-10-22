@@ -1682,11 +1682,11 @@ abstract class OrderDocument {
                 CustomXmlExporter::instance()->output_document_xml( $document );
         }
 
-        public function preview_ubl() {
-                // get last settings
-                $this->settings = $this->get_settings( true, 'ubl' );
+	public function preview_ubl() {
+		// get last settings
+		$this->settings = $this->get_settings( true, 'ubl' );
 
-                return $this->output_ubl( true );
+		return $this->output_ubl( true );
 	}
 
 	public function output_ubl( $contents_only = false ) {

@@ -516,15 +516,12 @@ class Main {
 
 				$output_format = WPO_WCPDF()->settings->get_output_format( $document, $request );
 
-                                switch ( $output_format ) {
-                                        case 'xml':
-                                                $document->output_xml();
-                                                break;
-                                        case 'ubl':
-                                                $document->output_ubl();
-                                                break;
-                                        case 'html':
-                                                add_filter( 'wpo_wcpdf_use_path', '__return_false' );
+				switch ( $output_format ) {
+					case 'ubl':
+						$document->output_ubl();
+						break;
+					case 'html':
+						add_filter( 'wpo_wcpdf_use_path', '__return_false' );
 						$document->output_html();
 						break;
 					case 'pdf':

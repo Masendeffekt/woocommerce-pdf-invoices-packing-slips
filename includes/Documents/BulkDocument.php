@@ -177,10 +177,10 @@ class BulkDocument {
                 CustomXmlExporter::instance()->output_bulk_document_xml( $this );
         }
 
-        public function get_filename( $context = 'download', $args = array() ) {
-                if ( empty( $this->wrapper_document ) ) {
-                        $this->wrapper_document = wcpdf_get_document( $this->get_type(), null );
-                }
+	public function get_filename( $context = 'download', $args = array() ) {
+		if ( empty( $this->wrapper_document ) ) {
+			$this->wrapper_document = wcpdf_get_document( $this->get_type(), null );
+		}
 		$default_args = array(
 			'order_ids' => $this->order_ids,
 		);
